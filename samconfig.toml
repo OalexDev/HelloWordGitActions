@@ -1,0 +1,14 @@
+version = 0.1
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "alexandretestehellowgitactions"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1c8lbsq4848hs"
+s3_prefix = "alexandretestehellowgitactions"
+region = "us-east-1"
+profile = "musa-lab"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "AppName=\"alexandretestehellowgitactions\" AppVersion=\"1.0.0\" AppEnv=\"dev\" DatabaseInstanceIdentifier=\"ada01\" DatabaseName=\"postgres\" DatabaseBackupRetentionPeriod=\"0\" DatabaseAllocatedStorage=\"20\" DatabaseEngineVersion=\"11.13\" DatabaseInstanceClass=\"db.t2.micro\""
+image_repositories = ["AlexandreHelloTeste=205651454669.dkr.ecr.us-east-1.amazonaws.com/alexandretestehellowgitactions971e5f2d/alexandrehellotestecc2944d2repo"]
