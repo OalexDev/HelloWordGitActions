@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: test with rds
+
+Parameters:
+
+  AppName:
+    Description: Name of application
+    Type: String
+  
+  AppVersion:
+    Description: Version of application
+    Type: String
+
+  AppEnv:
+    Description: Internal environment of application
+    Type: String
+
+  DatabaseInstanceIdentifier:
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters
+    Default: alexandre01
+    Description: Instance identifier name
+    MaxLength: 60
+    MinLength: 1
+    Type: String
+
+  DatabaseName:
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters
+    Default: postgres
+    Description: postgresql database name
+    MaxLength: 64
+    MinLength: 1
+    Type: String
+
+  DatabaseUser:
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters
+    Default: postgres
+    Description: Username for postgresql database access
+    MaxLength: 16
+    MinLength: 1
+    NoEcho: true
+    Type: String
+
+  DatabasePassword:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Must contain only alphanumeric characters
+    Default: 4daL0v3lace
+    Description: Password for  database access
+    MaxLength: 41
+    MinLength: 8
+    NoEcho: true
+    Type: String
+
+  DatabaseBackupRetentionPeriod:
+    ConstraintDescription: Database backup retention period must be between 0 and 35 days
+    Default: 0
+    Description: The number of days for which automatic DB snapshots are retained
+    MaxValue: 35
+    MinValue: 0
+    Type: Number
+
+  DatabaseAllocatedStorage:
+    ConstraintDescription: Must be between 5 and 1024Gb
+    Default: 20
+    Description: The size of the database (Gb)
+    MaxValue: 65536
+    MinValue: 5
+    Type: Number
+
+  DatabaseEngineVersion:
+    Description: Version of engine database
+    Default: '11.13'
+    Type: String
+
+  DatabaseInstanceClass:
+    AllowedValues:
+      - db.t1.micro
+      - db.t2.micro
+      - db.m1.small
+      - db.m1.medium
+      - db.m1.large
+    ConstraintDescription: Must select a valid database instance type
+    Default: db.t2.micro
+    Description: The database instance type
+    Type: String
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  AlexandreHelloTeste:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: any
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          ADADBUSER: !Ref DatabaseUser
+          ADADBPASS: !Ref DatabasePassword
+          ADADBHOST: !GetAtt DatabaseInstance.Endpoint.Address
+          ADADBPORT: !GetAtt DatabaseInstance.Endpoint.Port
+          APPNAME: !Ref AppName
+          APPVERSION: !Ref AppVersion
+          APPENV: !Ref AppEnv
+
+    Metadata:
+      DockerTag: go1.x-v1
+      DockerContext: .
+      Dockerfile: Dockerfile
+
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref DatabaseAllocatedStorage
+      BackupRetentionPeriod: !Ref DatabaseBackupRetentionPeriod
+      DBInstanceClass: !Ref DatabaseInstanceClass
+      DBInstanceIdentifier: !Ref DatabaseInstanceIdentifier
+      DBName: !Ref DatabaseName
+      MasterUsername: !Ref DatabaseUser
+      MasterUserPassword: !Ref DatabasePassword
+      EngineVersion: !Ref DatabaseEngineVersion
+      Engine: postgres
+
+    DeletionPolicy: Snapshot
+
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  AlexandreHelloTesteAPI:
+    Description: "API Gateway endpoint URL for Dev environment for First Function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+    Export:
+      Name: AlexandreHelloTesteAPI
+  AlexandreHelloTesteFunction:
+    Description: "First Lambda Function ARN"
+    Value: !GetAtt AlexandreHelloTeste.Arn
+  AlexandreHelloTesteFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt AlexandreHelloTesteRole.Arn
+  AlexandreHelloTesteDatabase:
+    Description: "Database host for ada backend app"
+    Value: !GetAtt DatabaseInstance.Endpoint.Address
